@@ -66,8 +66,8 @@ contract SwapsTest is Test {
         );
 
         // get DAI and WETH9 to the deployer
-        DAI.mint(deployer, 100_000e18);
-        vm.deal(deployer, 100_000 ether);
+        DAI.mint(address(this), 100_000e18);
+        vm.deal(address(this), 100_000 ether);
         WETH9.deposit{value: 10_000e18}();
     }
 
