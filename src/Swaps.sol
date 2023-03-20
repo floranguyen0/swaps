@@ -8,12 +8,12 @@ import "lib/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "lib/v3-periphery/contracts/interfaces/IQuoter.sol";
 
 contract Swaps {
-    ISwapRouter public immutable swapRouter;
-    IQuoter public immutable quoter;
-    address public immutable DAI;
-    address public immutable WETH9;
-    address public immutable swapToken;
-    uint24 public constant fee = 3000;
+    ISwapRouter private immutable SWAPROUTER;
+    IQuoter private immutable QUOTER;
+    address private immutable DAI;
+    address private immutable WETH9;
+    address private immutable SWAPTOKEN;
+    uint24 private constant fee = 3000;
 
     event ConvertDaiToEth(address indexed swapper, uint256 indexed amountIn);
     event ConvertDaiToSwapToken(
@@ -32,11 +32,11 @@ contract Swaps {
         address WETH9_,
         address swapToken_
     ) {
-        swapRouter = swapRouter_;
-        quoter = quoter_;
+        SWAPROUTER = swapRouter_;
+        QUOTER = quoter_;
         DAI = DAI_;
         WETH9 = WETH9_;
-        swapToken = swapToken_;
+        SWAPTOKEN = swapToken_;
     }
 
     receive() external payable {}
@@ -55,7 +55,7 @@ contract Swaps {
             amountIn
         );
 
-        TransferHelper.safeApprove(DAI, address(swapRouter), amountIn);
+        TransferHelper.safeApprove(DAI, address(SWAPROUTER), amountIn);
 
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
             .ExactInputSingleParams({
@@ -69,7 +69,7 @@ contract Swaps {
                 sqrtPriceLimitX96: 0
             });
 
-        amountOut = swapRouter.exactInputSingle(params);
+        amountOut = SWAPROUTER.exactInputSingle(params);
         emit ConvertDaiToEth(msg.sender, amountIn);
     }
 
@@ -86,12 +86,12 @@ contract Swaps {
             amountIn
         );
 
-        TransferHelper.safeApprove(DAI, address(swapRouter), amountIn);
+        TransferHelper.safeApprove(DAI, address(SWAPROUTER), amountIn);
 
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
             .ExactInputSingleParams({
                 tokenIn: DAI,
-                tokenOut: swapToken,
+                tokenOut: SWAPTOKEN,
                 fee: fee,
                 recipient: msg.sender,
                 deadline: block.timestamp + 100,
@@ -100,7 +100,7 @@ contract Swaps {
                 sqrtPriceLimitX96: 0
             });
 
-        amountOut = swapRouter.exactInputSingle(params);
+        amountOut = SWAPROUTER.exactInputSingle(params);
         emit ConvertDaiToSwapToken(msg.sender, amountIn);
     }
 
@@ -111,17 +111,17 @@ contract Swaps {
         require(amountIn > 0, "Cannot convert 0 SWT");
 
         TransferHelper.safeTransferFrom(
-            swapToken,
+            SWAPTOKEN,
             msg.sender,
             address(this),
             amountIn
         );
 
-        TransferHelper.safeApprove(swapToken, address(swapRouter), amountIn);
+        TransferHelper.safeApprove(SWAPTOKEN, address(SWAPROUTER), amountIn);
 
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
             .ExactInputSingleParams({
-                tokenIn: swapToken,
+                tokenIn: SWAPTOKEN,
                 tokenOut: WETH9,
                 fee: fee,
                 recipient: msg.sender,
@@ -131,7 +131,7 @@ contract Swaps {
                 sqrtPriceLimitX96: 0
             });
 
-        amountOut = swapRouter.exactInputSingle(params);
+        amountOut = SWAPROUTER.exactInputSingle(params);
         emit ConvertSwapTokenToEth(msg.sender, amountIn);
     }
 
@@ -140,7 +140,7 @@ contract Swaps {
         payable
         returns (uint256)
     {
-        return quoter.quoteExactOutputSingle(DAI, WETH9, fee, ethAmountOut, 0);
+        return QUOTER.quoteExactOutputSingle(DAI, WETH9, fee, ethAmountOut, 0);
     }
 
     function estimateDaiForSwapToken(uint256 tokenAmountOut)
@@ -149,9 +149,9 @@ contract Swaps {
         returns (uint256)
     {
         return
-            quoter.quoteExactOutputSingle(
+            QUOTER.quoteExactOutputSingle(
                 DAI,
-                swapToken,
+                SWAPTOKEN,
                 fee,
                 tokenAmountOut,
                 0
@@ -164,8 +164,8 @@ contract Swaps {
         returns (uint256)
     {
         return
-            quoter.quoteExactOutputSingle(
-                swapToken,
+            QUOTER.quoteExactOutputSingle(
+                SWAPTOKEN,
                 WETH9,
                 fee,
                 ethAmountOut,

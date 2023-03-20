@@ -41,7 +41,7 @@ contract LiquidityProvider {
         address token1,
         uint24 fee,
         uint160 sqrtPriceX96
-    ) public {
+    ) external {
         nonfungiblePositionManager.createAndInitializePoolIfNecessary(
             token0,
             token1,
@@ -59,7 +59,7 @@ contract LiquidityProvider {
         uint256 amount0Desired,
         uint256 amount1Desired
     )
-        public
+        external
         returns (
             uint256 tokenId,
             uint256 amount0Deposited,
